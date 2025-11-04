@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>暖心弹窗程序</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .btn {
+            padding: 15px 30px;
+            margin: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+        }
+        .btn:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        .popup {
+            position: absolute;
+            width: 300px;
+            height: 150px;
+            background: white;
+            border: 3px solid;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-in;
+        }
+        .popup-header {
+            height: 30px;
+            background: inherit;
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+        .popup-content {
+            padding: 20px;
+            color: #333;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: calc(100% - 30px);
+        }
+        .close-btn {
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💝 暖心弹窗程序</h1>
+        <p>关闭第一个弹窗，收获满满的温暖话语</p>
+        
+        <button class="btn" onclick="startProgram()" id="startBtn">启动暖心程序</button>
+        
+        <div class="instructions" id="instructions" style="display:none;">
+            <h3>🎮 使用说明：</h3>
+            <p>1. 点击第一个弹窗右上角的 <span style="color:#ff4444;">❌</span> 关闭按钮</p>
+            <p>2. 等待其他暖心话语自动弹出</p>
+            <p>3. 弹窗会在3秒后自动消失</p>
+        </div>
+        
+        <div id="popupContainer"></div>
+    </div>
+
+    <script>
+        const warmMessages = [
+            "多喝水哦~", "保持微笑", "每天都要元气满满", 
+            "记得好好休息", "保持好心情", "好好爱自己",
+            "梦想成真", "别太累啦", "要相信自己", "你很棒的",
+            "记得好好护肤", "早点休息", "别熬夜", "今天过得开心吗",
+            "天冷了，多穿衣服", "你是最棒的", "保持积极心态",
+            "一切都会好的", "相信自己", "加油！", "坚持就是胜利",
+            "明天会更好", "保持耐心", "你很特别", "世界因你而美丽"
+        ];
+
+        const colors = [
+            { bg: '#f0f8ff', border: '#4682b4' }, // 爱丽丝蓝
+            { bg: '#fff0f5', border: '#c71585' }, // 薰衣草红
+            { bg: '#f0fff0', border: '#3cb371' }, // 蜜瓜绿
+            { bg: '#fffaf0', border: '#d2691e' }, // 杏仁白
+            { bg: '#f0ffff', border: '#008b8b' }, // 薄荷蓝
+            { bg: '#fff5ee', border: '#db7093' }  // 贝壳粉
+        ];
+
+        let popups = [];
+        let firstPopupClosed = false;
+        let programRunning = false;
+
+        function createPopup(message, isFirst = false) {
+            const container = document.getElementById('popupContainer');
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            popup.style.background = color.bg;
+            popup.style.borderColor = color.border;
+            
+            // 随机位置，避免重叠
+            let x, y;
+            let attempts = 0;
+            do {
+                x = Math.random() * (window.innerWidth - 320);
+                y = Math.random() * (window.innerHeight - 160);
+                attempts++;
+            } while (isOverlapping(x, y) && attempts < 50);
+            
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            
+            // 弹窗内容
+            popup.innerHTML = `
+                <div class="popup-header" style="border-bottom-color: ${color.border}">
+                    <span>暖心提醒</span>
+                    ${isFirst ? '<button class="close-btn">×</button>' : ''}
+                </div>
+                <div class="popup-content">${message}</div>
+            `;
+            
+            container.appendChild(popup);
+            
+            const popupObj = {
+                element: popup,
+                createdTime: Date.now(),
+                isFirst: isFirst
+            };
+            
+            popups.push(popupObj);
+            
+            // 添加关闭按钮事件
+            if (isFirst) {
+                const closeBtn = popup.querySelector('.close-btn');
+                closeBtn.addEventListener('click', () => {
+                    closePopup(popupObj);
+                    firstPopupClosed = true;
+                });
+            }
+            
+            return popupObj;
+        }
+
+        function isOverlapping(x, y) {
+            for (let popup of popups) {
+                const rect = popup.element.getBoundingClientRect();
+                if (Math.abs(x - rect.left) < 320 && Math.abs(y - rect.top) < 160) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function closePopup(popup) {
+            popup.element.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                if (popup.element.parentNode) {
+                    popup.element.parentNode.removeChild(popup.element);
+                }
+                popups = popups.filter(p => p !== popup);
+            }, 300);
+        }
+
+        function updatePopups() {
+            const now = Date.now();
+            
+            // 移除超时的弹窗（非第一个）
+            popups.forEach(popup => {
+                if (!popup.isFirst && now - popup.createdTime > 3000) {
+                    closePopup(popup);
+                }
+            });
+            
+            // 添加新弹窗
+            if (firstPopupClosed && popups.length < 20) {
+                if (Math.random() < 0.1) { // 控制弹出频率
+                    const message = warmMessages[Math.floor(Math.random() * warmMessages.length)];
+                    createPopup(message);
+                }
+            }
+        }
+
+        function startProgram() {
+            if (programRunning) return;
+            
+            programRunning = true;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('instructions').style.display = 'block';
+            
+            // 创建第一个弹窗
+            createPopup("我想你了", true);
+            
+            // 开始更新循环
+            setInterval(updatePopups, 100);
+        }
+
+        // 点击弹窗外部关闭（可选）
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.popup')) {
+                // 可以添加点击外部关闭的逻辑
+            }
+        });
+    </script>
+</body>
+</html>
